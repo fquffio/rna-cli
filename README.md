@@ -30,6 +30,7 @@ $ rna
 * [x] **publish** - Publish to NPM.
 * [ ] **cdn** - Publish to CDN.
 * [ ] **documentation** - Generate API references.
+* [ ] **wiki** - Generate wiki frontend.
 * [x] **icons** - Generate project icons.
 * [x] **sw** - Generate Service Worker with precached files.
 * [x] **start** - `yarn/npm start` alias

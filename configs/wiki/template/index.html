@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="<%= description %>">
+    <meta name="keywords" content="<%= keywords %>">
+    <meta property="og:title" content="<%= name %> - <%= author %>">
+    <meta property="og:type" content="product">
+    <meta property="og:image" content="<%= homepage %>/img/logo-raster-128.jpg">
+    <meta property="og:url" content="<%= homepage %>">
+    <meta property="og:description" content="<%= description %>"/>
+    <meta name="twitter:title" content="<%= name %> - <%= author %>">
+    <meta name="twitter:description" content="<%= description %>">
+    <meta name="twitter:url" content="<%= homepage %>">
+    <meta name="twitter:image" content="<%= homepage %>/img/logo-raster-128.jpg">
+    <meta name="theme-color" content="#D30000">
+
+    <title><%= title %> - <%= author %></title>
+    <link rel="stylesheet" href="/index.css" async defer>
+</head>
+
+<body>
+    <nav>
+        <% if (pages) { %>
+            <a href="/">Home</a>
+            <a href="/pages/">Docs</a>
+        <% } %>
+        <a href="<%= repository %>" target="_blank" rel="noopener">Source</a>
+        <div style="flex: 1 auto;"></div>
+        <% if (!workspaces) { %>
+            <a href="https://www.npmjs.com/package/<%= name %>"><img src="https://img.shields.io/npm/v/<%= name %>.svg" alt="NPM"></a>
+        <% } else if (scope && version) { %>
+            <a href="https://www.npmjs.com/~<%= scope %>"><img src="https://img.shields.io/npm/v/<%= version %>.svg" alt="NPM"></a>
+        <% } %>
+        <% if (version && releases) { %>
+            <a href="<%= releases %>"><img src="https://img.shields.io/badge/releases-v<%= version %>-green.svg" alt="Releases"></a>
+            <% } %>
+    </nav>
+    <header>
+        <div class="logo-wrapper">
+            <img class="logo" src="https://logos.chialab.io/<%= name %>.svg" alt="<%= name %> Logo" />
+        </div>
+        <h1><%= title %></h1>
+        <h2><%= description %></h2>
+        <% if (!toc) { %>
+            <% if (releases) { %>
+            <a href="<%= releases %>" target="_blank" rel="noopener" class="btn" floating>
+                Download
+            </a>
+            <% } %>
+            <% if (pages) { %>
+            <a href="/pages/" class="btn" floating>
+                Getting started
+            </a>
+            <% } %>
+        <% } %>
+    </header>
+    <% if (toc || content) { %>
+    <main>
+        <% if (toc) { %>
+        <aside><%= toc %></aside>
+        <% } %>
+        <section><%= content %></section>
+    </main>
+    <% } %>
+    <footer>
+        <p>
+            <% if (author) { %> <%= author %> <% } %>
+            <br /><br />
+            <% if (authorLink) { %>
+                <a href="<%= authorLink %>" target="_blank"><%= authorLink %></a><br />
+            <% } %>
+            <% if (authorMail) { %>
+                <a href="mailto:dev@chialab.it"><%= authorMail %></a>
+            <% } %>
+        </p>
+    </footer>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prettify/r298/prettify.min.js"></script>
+    <script>
+        window.addEventListener('load', function() {
+            var pres = document.querySelectorAll('pre code');
+            for (var i = 0; i < pres.length; i++) {
+                pres[i].classList.add('prettyprint');
+            }
+            PR.prettyPrint();
+        });
+    </script>
+    <% if (extra && extra.ga) { %>
+    <script>
+        (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+        (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+        m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+        })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+
+        ga('create', '<%= extra.ga %>', 'auto');
+        ga('send', 'pageview');
+    </script>
+    <% } %>
+</body>
+
+</html>
