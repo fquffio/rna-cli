@@ -1,6 +1,6 @@
 const fs = require('fs-extra');
 const path = require('path');
-const url = require(url);
+const url = require('url');
 const _ = require('underscore');
 const postcss = require('postcss');
 const autoprefixer = require('autoprefixer');
@@ -10,14 +10,22 @@ const marked = require('marked');
 /**
  * Regex to match hidden pages (filename starts with `_`).
  * Github/Gitlab proposal.
+ * @type {RegExp}
  */
 const HIDDEN_PAGE = /^_/i;
 
 /**
  * Regex to match home page.
  * Github/Gitlab proposal.
+ * @type {RegExp}
  */
 const HOME_PAGE = /home\.md/i;
+
+/**
+ * Default project icon.
+ * @type {String}
+ */
+const LOGO = 'https://logos.chialab.io/undefined.svg';
 
 /**
  * The template base path.
@@ -175,6 +183,7 @@ module.exports = {
             name: input.name || '',
             version: input.version,
             description: input.description || '',
+            logo: LOGO,
             keywords: (input.keywords || []).join(' '),
             // Get repository homepage
             repository: repoToUrl(input.repository || ''),
@@ -197,13 +206,15 @@ module.exports = {
     /**
      * Copy template assets.
      * @param {String} output The output path of the wiki.
+     * @param {Array<string>} [assets] A list of extra assets.
      * @return {Promise}
      */
-    assets(output) {
-        return fs.copy(
-            path.join(TEMPLATE, 'img'),
-            path.join(output, 'img')
-        );
+    assets(output, assets = []) {
+        let dest = path.join(output, 'img');
+        fs.ensureDirSync(dest);
+        fs.copySync(path.join(TEMPLATE, 'img'), dest);
+        assets.map((file) => fs.copySync(file, path.join(dest, path.basename(file))));
+        return global.Promise.resolve();
     },
 
     /**
@@ -241,30 +252,31 @@ module.exports = {
      * @param {String} output The output path of the wiki.
      * @param {Object} data The template data.
      * @param {Array<string>} pages A list of pages.
+     * @param {Array<string>} assets A list of assets.
      * @return {Promise}
      */
-    index(output, json, pages) {
+    index(output, data, pages, assets) {
         let template = this.template('index.html');
         let p = path.join(output, 'index.html');
-        json.content = '';
+        data.content = '';
         if (pages) {
             // if there is the home page, use it for the content
             let home = pages.find((file) => !!file.match(HOME_PAGE));
             if (fs.existsSync(home)) {
-                json.content = marked(fs.readFileSync(home, 'utf8'));
+                data.content = marked(fs.readFileSync(home, 'utf8'));
             }
         }
-        json.toc = null;
-        json.pages = pages.length;
+        data.toc = null;
+        data.pages = pages.length;
         fs.ensureFileSync(p);
         // generate the file
         try {
-            fs.writeFileSync(p, template(json));
+            fs.writeFileSync(p, template(data));
             return global.Promise.all([
                 // generate styles
                 this.css(output),
                 // copy assets
-                this.assets(output),
+                this.assets(output, assets),
             ]);
         } catch (err) {
             return global.Promise.reject(err);

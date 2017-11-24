@@ -22,11 +22,22 @@ function generate(app, project, options) {
     let json = generator.json(require(jsonPath));
     // get projects markdown pages if the option is passed.
     let pages = (options.pages ? glob.sync(options.pages, { cwd: project }) : []).map((f) => path.resolve(project, f));
+    let assets = [];
+    // handle the logo
+    if (options.logo) {
+        if (!options.logo.match(/^https?:\/\//)) {
+            // is local path
+            json.logo = `/img/${path.basename(options.logo)}`;
+            assets.push(path.resolve(project, options.logo));
+        } else {
+            json.logo = options.logo;
+        }
+    }
     // ensure the output path exists (and empty it).
     fs.ensureDirSync(options.output);
     fs.emptyDirSync(options.output);
     // generate the index
-    return generator.index(options.output, Proteins.clone(json), pages)
+    return generator.index(options.output, Proteins.clone(json), pages, assets)
         // generate the 404 page
         .then(() => generator.missing(options.output, Proteins.clone(json), pages))
         // generate pages
@@ -55,6 +66,7 @@ function generate(app, project, options) {
  * @namespace options
  * @property {String} pages The markdown files path.
  * @property {String} output The output path.
+ * @property {String} logo The project logo.
  */
 module.exports = (app, options = {}) => {
     options = Proteins.clone(options);
@@ -75,5 +87,6 @@ module.exports = (app, options = {}) => {
         output: path.resolve(input, options.output),
         pages: options.pages,
         packages: filter.packages,
+        logo: options.logo,
     });
 };

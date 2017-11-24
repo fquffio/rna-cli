@@ -11,5 +11,12 @@ module.exports = (program) => {
         .option('[<path>]', 'The path of the project.')
         .option('--pages', 'The path to markdown files.')
         .option('--output', 'Where to build the wiki.')
-        .action((app, options = {}) => require('./action')(app, options));
+        .option('--logo', 'A logo path.')
+        .action((app, options = {}) => {
+            try {
+                return require('./action')(app, options);
+            } catch (err) {
+                return global.Promise.reject(err);
+            }
+        });
 };
