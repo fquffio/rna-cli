@@ -7,7 +7,7 @@ module.exports = function runNativeScriptTest(platform, file) {
     let p = path.join(paths.tmp, 'NSTest');
     return exec('tns', ['create', 'Test', '--path', p])
         .then(() => exec('tns', ['test', 'init', '--path', `${p}/Test`, '--framework', 'mocha']))
-        .then(() => fs.copy(file, `${p}/Test/app/tests`))
+        .then(() => fs.copy(file, `${p}/Test/app/tests/unit.js`))
         .then(() => exec('tns', ['test', platform, '--emulator', '--justlaunch', '--path', `${p}/Test`]));
 
 };
