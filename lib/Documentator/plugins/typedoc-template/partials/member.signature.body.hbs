@@ -1,0 +1,37 @@
+
+{{#if typeParameters}}
+    {{> typeParameters}}
+{{/if}}
+
+{{#if parameters}}
+    <ul class="tsd-parameters">
+        {{#each parameters}}
+            <li>
+                <h5>{{#compact}}
+                    {{name}}
+                    {{#if defaultValue}}
+                        <span class="tsd-signature-symbol">
+                        &nbsp;=&nbsp;
+                        {{defaultValue}}
+                        </span>
+                    {{/if}}
+                {{/compact}}
+                </h5>
+                <div class="tsd-parameter-comment">
+                    {{#with comment}}
+                        {{#if hasVisibleComponent}}
+                        <span class="tsd-signature-symbol">&nbsp;—&nbsp;</span>
+                        {{/if}}
+                    {{/with}}
+                    {{> comment}}
+                </div>
+            </li>
+        {{/each}}
+    </ul>
+{{/if}}
+
+{{#unless hideSources}}
+    {{> member.sources}}
+{{/unless}}
+
+{{> comment}}

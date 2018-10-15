@@ -10,9 +10,11 @@ module.exports = (program) => {
         .readme(`${__dirname}/README.md`)
         .description('Generate API references.')
         .option('<file>', 'The files to documentate.')
-        .option('--output', 'The markdown output directory.')
+        .option('--name', 'The documentation name.')
+        .option('--output', 'The documentation output directory.')
         .action(async (app, options) => {
-            const Project = require('../../lib/Project.js');
+            const Project = require('../../lib/Project');
+            const Documentator = require('../../lib/Documentator/Documentator');
 
             if (!options.output) {
                 throw 'Missing \'output\' property.';
@@ -20,6 +22,8 @@ module.exports = (program) => {
 
             const cwd = process.cwd();
             const project = new Project(cwd);
+
+            const doc = new Documentator(Documentator.detectConfig(app, project, options));
 
             let entries;
             if (options.arguments.length) {
@@ -32,76 +36,35 @@ module.exports = (program) => {
                 } else {
                     entries = [project];
                 }
-
-                if (!entries.length) {
-                    throw 'no files for documentation found';
-                }
             }
 
-            // process entries
-            for (let i = 0; i < entries.length; i++) {
-                let entry = entries[i];
+            let files = [];
 
+            entries.forEach((entry) => {
+                if (!entry.exists()) {
+                    return;
+                }
                 if (entry instanceof Project) {
-                    // process package
-                    let output = entry.entry(options.output);
-                    if (!output.extname) {
-                        output = output.file(project.scopeModule);
+                    let src = [
+                        entry.directories.src,
+                        entry.directory('src'),
+                    ].find((dir) => dir && dir.exists());
+                    if (src) {
+                        files.push(
+                            ...src
+                                .resolve('**/*.{ts,js,mjs}')
+                                .map((file) => file.path)
+                        );
                     }
-                    let script = entry.get('module') ?
-                        entry.file(entry.get('module')) :
-                        entry.file(entry.get('main'));
-                    await generate(
-                        app,
-                        [script.path],
-                        output
-                    );
-
-                    continue;
+                    return;
                 }
+                files.push(entry.path);
+            });
 
-                // process file
-                let output = project.entry(options.output);
-                if (!output.extname) {
-                    output = output.file(entry.basename.replace(entry.extname, '.md'));
-                }
-                await generate(
-                    app,
-                    [entry.path],
-                    options.output
-                );
-                continue;
+            if (!files.length) {
+                throw 'missing files for documentation';
             }
+
+            await doc.build(files);
         });
 };
-
-/**
- * Generate the API reference file.
- *
- * @param {CLI} app The CLI intance.
- * @param {Array<String>} sources A list of sources to parse.
- * @param {String} output The reference file name.
- * @return {Promise}
- */
-async function generate(app, sources, output) {
-    const fs = require('fs-extra');
-    const path = require('path');
-    const documentation = require('documentation');
-
-    app.logger.play(`generating API references... (${output})`);
-    // start the `documentation` task.
-    try {
-        let builder = await documentation.build(sources, {});
-        // format the result using markdown.
-        let contents = await documentation.formats.md(builder);
-        // write the final result.
-        fs.ensureDirSync(path.dirname(output));
-        fs.writeFileSync(output, contents);
-        app.logger.stop();
-        app.logger.success('documentation created', output.localPath);
-    } catch(err) {
-        // ops.
-        app.logger.stop();
-        throw err;
-    }
-}
