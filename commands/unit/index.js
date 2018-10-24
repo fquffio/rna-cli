@@ -15,6 +15,7 @@ module.exports = (program) => {
         .option('[--saucelabs]', 'Use SauceLabs as browsers provider.')
         .option('[--saucelabs.username]', 'SauceLabs username.')
         .option('[--saucelabs.key]', 'SauceLabs access key.')
+        .option('[--browserstack]', 'Use Browserstack as browsers provider.')
         .option('[--electron]', 'Use electron.')
         .option('[--nativescript <ios|android>]', 'Use nativescript.')
         .option('[--coverage]', 'Enable code coverage.')
@@ -51,6 +52,21 @@ module.exports = (program) => {
                 }
                 if (!process.env.SAUCE_ACCESS_KEY) {
                     throw 'Missing SAUCE_ACCESS_KEY variable.';
+                }
+            }
+
+            if (options.browserstack) {
+                if (options['browserstack.username']) {
+                    process.env.BROWSER_STACK_USERNAME = options['browserstack.username'];
+                }
+                if (options['browserstack.key']) {
+                    process.env.BROWSER_STACK_ACCESS_KEY = options['browserstack.key'];
+                }
+                if (!process.env.BROWSER_STACK_USERNAME) {
+                    throw 'Missing BROWSERSTACK_USERNAME variable.';
+                }
+                if (!process.env.BROWSER_STACK_ACCESS_KEY) {
+                    throw 'Missing BROWSERSTACK_ACCESS_KEY variable.';
                 }
             }
 
@@ -286,6 +302,7 @@ module.exports = (program) => {
 const ENVIRONMENTS = {
     node: { runner: 'mocha' },
     browser: { runner: 'karma' },
+    browserstack: { runner: 'karma' },
     saucelabs: { runner: 'karma' },
     electron: { runner: 'karma' },
     nativescript: { runner: 'ns' },
@@ -433,6 +450,27 @@ async function getConfig(app, project, options) {
             throw new Error('invalid SauceLabs targets.');
         }
         conf.plugins.push(require('karma-sauce-launcher'));
+    }
+
+    if (options.browserstack) {
+        const browserstack = require('../../lib/browserstack');
+
+        conf.reporters.push('BrowserStack');
+        conf.browserStack = {
+            username: process.env.BROWSER_STACK_USERNAME,
+            accessKey: process.env.BROWSER_STACK_ACCESS_KEY,
+            startTunnel: true,
+            retryLimit: 3,
+            timeout: 1800,
+            name: getTestName(project),
+        };
+        let browserstackBrowsers = await browserstack.launchers(options.targets);
+        conf.customLaunchers = browserstackBrowsers;
+        conf.browsers = Object.keys(browserstackBrowsers);
+        if (conf.browsers.length === 0) {
+            throw new Error('invalid BrowserStack targets.');
+        }
+        conf.plugins.push(require('karma-browserstack-launcher'));
     }
 
     if (options.electron) {
